@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PX-VW-VH 换算工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .converter-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+
+        .ratio-info {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #409eff;
+            box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+        }
+
+        .result-group {
+            margin-top: 30px;
+        }
+
+        .result-item {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-content {
+            flex: 1;
+        }
+
+        .result-item span {
+            display: block;
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .copy-btn {
+            padding: 8px 12px;
+            background-color: #409eff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+        }
+
+        .copy-btn:hover {
+            background-color: #337ecc;
+        }
+
+        .copy-btn.copied {
+            background-color: #67c23a;
+        }
+
+        .btn-reset {
+            width: 100%;
+            padding: 12px;
+            background-color: #409eff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-reset:hover {
+            background-color: #337ecc;
+        }
+
+        /* 禁用状态样式 */
+        input:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        /* 提示框样式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="converter-container">
+        <h1>PX ↔ VW/VH 换算工具</h1>
+        <div class="ratio-info">
+            换算比例：1px = 0.2564vw = 0.1185vh
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="input-group">
+            <label for="px-input">输入PX值</label>
+            <input type="number" id="px-input" placeholder="例如：100" step="0.01">
+        </div>
+
+        <div class="input-group">
+            <label for="vw-input">输入VW值</label>
+            <input type="number" id="vw-input" placeholder="例如：25.64" step="0.0001">
+        </div>
+
+        <div class="input-group">
+            <label for="vh-input">输入VH值</label>
+            <input type="number" id="vh-input" placeholder="例如：11.85" step="0.0001">
+        </div>
+
+        <!-- 结果区域 -->
+        <div class="result-group">
+            <div class="result-item">
+                <div class="result-content">
+                    <label>换算结果 (VW)</label>
+                    <span id="vw-result">0.00</span>
+                </div>
+                <button class="copy-btn" data-target="vw">复制</button>
+            </div>
+            <div class="result-item">
+                <div class="result-content">
+                    <label>换算结果 (VH)</label>
+                    <span id="vh-result">0.00</span>
+                </div>
+                <button class="copy-btn" data-target="vh">复制</button>
+            </div>
+            <div class="result-item">
+                <div class="result-content">
+                    <label>换算结果 (PX)</label>
+                    <span id="px-result">0.00</span>
+                </div>
+                <button class="copy-btn" data-target="px">复制</button>
+            </div>
+        </div>
+
+        <button class="btn-reset" id="reset-btn">重置</button>
+    </div>
+
+    <!-- 提示框 -->
+    <div class="toast" id="toast">复制成功！</div>
+
+    <script>
+        // 定义换算比例
+        const PX_TO_VW = 0.2564;  // 1px = 0.2564vw
+        const PX_TO_VH = 0.1185;  // 1px = 0.1185vh
+        const VW_TO_PX = 1 / PX_TO_VW;  // 1vw = 1/0.2564 px
+        const VH_TO_PX = 1 / PX_TO_VH;  // 1vh = 1/0.1185 px
+
+        // 获取DOM元素
+        const pxInput = document.getElementById('px-input');
+        const vwInput = document.getElementById('vw-input');
+        const vhInput = document.getElementById('vh-input');
+        const vwResult = document.getElementById('vw-result');
+        const vhResult = document.getElementById('vh-result');
+        const pxResult = document.getElementById('px-result');
+        const resetBtn = document.getElementById('reset-btn');
+        const copyBtns = document.querySelectorAll('.copy-btn');
+        const toast = document.getElementById('toast');
+
+        // 复制功能
+        function copyToClipboard(text) {
+            // 创建临时文本框
+            const tempInput = document.createElement('input');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            
+            // 显示提示
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 1500);
+        }
+
+        // 绑定复制按钮事件
+        copyBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const target = this.getAttribute('data-target');
+                let value, unit;
+                
+                if (target === 'vw') {
+                    value = vwResult.textContent;
+                    unit = 'vw';
+                } else if (target === 'vh') {
+                    value = vhResult.textContent;
+                    unit = 'vh';
+                } else if (target === 'px') {
+                    value = pxResult.textContent;
+                    unit = 'px';
+                }
+                
+                // 拼接带单位的数值并复制
+                const copyText = `${value}${unit}`;
+                copyToClipboard(copyText);
+                
+                // 按钮状态变化
+                this.textContent = '已复制';
+                this.classList.add('copied');
+                setTimeout(() => {
+                    this.textContent = '复制';
+                    this.classList.remove('copied');
+                }, 1500);
+            });
+        });
+
+        // 初始化输入框监听
+        function initEventListeners() {
+            // PX输入变化时计算VW/VH
+            pxInput.addEventListener('input', function() {
+                const pxValue = parseFloat(this.value) || 0;
+                // 清空其他输入框
+                vwInput.value = '';
+                vhInput.value = '';
+                // 计算并显示结果
+                vwResult.textContent = (pxValue * PX_TO_VW).toFixed(4);
+                vhResult.textContent = (pxValue * PX_TO_VH).toFixed(4);
+                pxResult.textContent = pxValue.toFixed(2);
+            });
+
+            // VW输入变化时计算PX/VH
+            vwInput.addEventListener('input', function() {
+                const vwValue = parseFloat(this.value) || 0;
+                // 清空其他输入框
+                pxInput.value = '';
+                vhInput.value = '';
+                // 计算PX值
+                const pxValue = vwValue * VW_TO_PX;
+                // 计算并显示结果
+                vwResult.textContent = vwValue.toFixed(4);
+                vhResult.textContent = (pxValue * PX_TO_VH).toFixed(4);
+                pxResult.textContent = pxValue.toFixed(2);
+            });
+
+            // VH输入变化时计算PX/VW
+            vhInput.addEventListener('input', function() {
+                const vhValue = parseFloat(this.value) || 0;
+                // 清空其他输入框
+                pxInput.value = '';
+                vwInput.value = '';
+                // 计算PX值
+                const pxValue = vhValue * VH_TO_PX;
+                // 计算并显示结果
+                vwResult.textContent = (pxValue * PX_TO_VW).toFixed(4);
+                vhResult.textContent = vhValue.toFixed(4);
+                pxResult.textContent = pxValue.toFixed(2);
+            });
+
+            // 重置按钮
+            resetBtn.addEventListener('click', function() {
+                pxInput.value = '';
+                vwInput.value = '';
+                vhInput.value = '';
+                vwResult.textContent = '0.00';
+                vhResult.textContent = '0.00';
+                pxResult.textContent = '0.00';
+                pxInput.focus();
+            });
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', initEventListeners);
+    </script>
+</body>
+</html>
